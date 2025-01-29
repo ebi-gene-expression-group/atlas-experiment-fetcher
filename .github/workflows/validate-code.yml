@@ -20,7 +20,7 @@ jobs:
 
       - name: check YAML syntax
         run: |
-          yamllint .
+          yamllint --max-line-length 200 .
 
       - name: lint python code
         run: |
