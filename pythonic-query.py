@@ -11,8 +11,9 @@ def get_experiment_ids():
     bash_command = 'curl -sS https://www.ebi.ac.uk/gxa/json/experiments | jq -r ".experiments[].experimentAccession" | sort -u'
     experiment_accessions = subprocess.check_output(bash_command, shell=True, text=True)
     study_ids = experiment_accessions.strip().split("\n")
-    
+
     return study_ids
+
 
 def fetch_and_parse_data(study_id):
     study_url = f"https://www.ebi.ac.uk/gxa/json/experiments/{study_id}"
@@ -26,7 +27,7 @@ def fetch_and_parse_data(study_id):
 
     experiment_type = json_data.get("experiment", {}).get("type", "N/A")
     organism = json_data.get("experiment", {}).get("species", "N/A")
-    
+
     global studyid_counter
     studyid_counter += 1
 
@@ -35,7 +36,7 @@ def fetch_and_parse_data(study_id):
     print(f"    accession: {study_id}")
     print(f"    experiment_type: {experiment_type}")
     print(f"    organism: {organism}")
-    print(f"    assay_groups:")
+    print("    assay_groups:")
 
     # check if it's a differential experiment, and print contrast details
     if "differential" in experiment_type.lower():
@@ -46,7 +47,7 @@ def fetch_and_parse_data(study_id):
             contrast_details = column.get("contrastSummary", {})
             if contrast_details:
                 print(f"      - contrast_description: \"{contrast_details.get('contrastDescription', 'N/A')}\"")
-                
+
                 # Collect and clean data for the contrast properties
                 cleaned_properties = {
                     "clinical_information": [],
@@ -62,7 +63,7 @@ def fetch_and_parse_data(study_id):
                 for prop in contrast_details.get("properties", []):
                     property_name = prop.get("propertyName", "N/A").replace(" ", "_")
                     test_value = prop.get("testValue", "N/A")
-                    
+
                     if property_name in cleaned_properties and test_value not in cleaned_properties[property_name]:
                         cleaned_properties[property_name].append(test_value)
 
@@ -77,7 +78,6 @@ def fetch_and_parse_data(study_id):
                     resource_uri = resource.get("uri", "N/A")
                     print(f"        resource_type: {resource_type}")
                     print(f"        resource_uri: {resource_uri}")
-
 
     # Parse out the assay groups
     assay_groups = json_data.get("columnHeaders", [])
@@ -103,7 +103,7 @@ def fetch_and_parse_data(study_id):
 
             # If no relevant factors found, print a message
             if not found_factors:
-                print(f"        No relevant factors found.")
+                print("        No relevant factors found.")
         else:
             continue
 
@@ -115,4 +115,3 @@ print("experiments:")
 
 for study_id in study_ids:
     fetch_and_parse_data(study_id)
-
