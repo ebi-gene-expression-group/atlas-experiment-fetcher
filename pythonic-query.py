@@ -109,7 +109,9 @@ def fetch_and_parse_data(study_id):
 
 # print YAML header with current date
 print(f"date: {formatted_datetime}")
+
 study_ids = get_experiment_ids()
+
 print(f"experiment_count: {len(study_ids)}")
 print("experiments:")
 
