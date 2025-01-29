@@ -1,0 +1,11 @@
+date: 2025-01-28 18:55:27
+experiments:
+  - n_accession: 1
+    accession: E-ATMX-20
+    experiment_type: microarray_1colour_mrna_differential
+    organism: Arabidopsis thaliana
+    assay_groups:
+      - contrast_description: "Zat10 overexpression vs wild type"
+        array_design: A-AFFY-2
+        developmental_stage: mid rosette growth
+        organism_part: leaf
