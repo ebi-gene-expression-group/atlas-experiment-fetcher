@@ -1,0 +1,26 @@
+name: Validate YAML format and python code
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    name: YAML & python Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install yamllint and flake8
+        run: |
+          pip install yamllint flake8
+
+      - name: Check YAML syntax
+        run: |
+          yamllint --strict .
+
+      - name: Lint Python code
+        run: |
+          flake8 --max-line-length=100 .
