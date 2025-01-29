@@ -70,7 +70,10 @@ def fetch_and_parse_data(study_id):
                 # print the cleaned properties
                 for prop_name, prop_values in cleaned_properties.items():
                     if prop_values:
-                        print(f"        {prop_name}: {', '.join(prop_values)}")
+                        # remove None, empty strings, whitespace-only values, and accidental commas
+                        cleaned_values = [v.strip() for v in prop_values if v and v.strip() and not v.strip().startswith(",")]
+                        if cleaned_values:
+                            print(f"        {prop_name}: {', '.join(cleaned_values)}")
 
                 # Print resources for visualisation if they exist
                 for resource in contrast_details.get("resources", []):
