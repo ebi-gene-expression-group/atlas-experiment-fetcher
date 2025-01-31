@@ -2,6 +2,7 @@ from datetime import datetime
 import time
 import subprocess
 import json
+import requests
 
 studyid_counter = 0
 formatted_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -37,23 +38,36 @@ def get_experiment_ids():
 def fetch_and_parse_data(study_id):
     study_url = f"https://www.ebi.ac.uk/gxa/json/experiments/{study_id}"
 
-    # Use curl to fetch the data and jq to parse it
-    curl_command = f"curl -sS {study_url} | jq '.'"
-
     max_retries = 5
     retry_delay = 5
     attempt = 0
 
     while attempt < max_retries:
-        curl_command = f"curl -sS {study_url} | jq '.'"
-        data = subprocess.check_output(curl_command, shell=True, text=True)
+        try:
+            response = requests.get(study_url)
+            response.raise_for_status()
 
-        json_data = json.loads(data)
-        if isinstance(json_data, dict) and "experiment" in json_data:
-            break
+            # check if the response is empty or not valid JSON
+            if not response.text.strip():
+                attempt += 1
+                time.sleep(retry_delay)
+                continue
 
-        attempt += 1
-        time.sleep(retry_delay)
+            # try to load the json data from the response
+            try:
+                json_data = response.json()
+            except json.JSONDecodeError:
+                attempt += 1
+                time.sleep(retry_delay)
+                continue
+
+            # if json is valid, process the data
+            if isinstance(json_data, dict) and "experiment" in json_data:
+                break
+
+        except requests.RequestException:
+            attempt += 1
+            time.sleep(retry_delay)
 
     experiment_type = json_data.get("experiment", {}).get("type", "N/A")
     organism = json_data.get("experiment", {}).get("species", "N/A")
@@ -115,7 +129,7 @@ def fetch_and_parse_data(study_id):
                     print(f"        resource_type: {resource_type}")
                     print(f"        resource_uri: {resource_uri}")
 
-    # Parse out the assay groups
+    # parse out the assay groups
     assay_groups = json_data.get("columnHeaders", [])
 
     # loop through assay groups and print relevant properties (ignoring "N/A" groups)
