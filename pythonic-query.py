@@ -1,12 +1,31 @@
+from datetime import datetime
+import time
 import subprocess
 import json
-from datetime import datetime
 
 studyid_counter = 0
 formatted_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
-# Fetch the list of experiment accessions dynamically from GXA API
+def clean_text(text):
+    if isinstance(text, str):
+        text = text.replace(" :", "").replace(": ", "").replace(":", "")  # remove misplaced colons
+        text = text.replace('"', "'")  # replace double quotes with single quotes
+        text = text.lstrip(", ")  # remove leading commas and spaces
+        if text.startswith(">"):  # ensure '>' values are properly quoted
+            text = f'"{text}"'
+    return text
+
+
+# remove duplicate keys in properties
+def remove_duplicates(properties):
+    unique_properties = {}
+    for prop_name, prop_values in properties.items():
+        unique_properties[prop_name] = list(set(prop_values))
+    return unique_properties
+
+
+# fetch the list of experiment accessions dynamically from GXA API
 def get_experiment_ids():
     bash_command = 'curl -sS https://www.ebi.ac.uk/gxa/json/experiments | jq -r ".experiments[].experimentAccession" | sort -u'
     experiment_accessions = subprocess.check_output(bash_command, shell=True, text=True)
@@ -20,10 +39,21 @@ def fetch_and_parse_data(study_id):
 
     # Use curl to fetch the data and jq to parse it
     curl_command = f"curl -sS {study_url} | jq '.'"
-    data = subprocess.check_output(curl_command, shell=True)
 
-    # Load data into python
-    json_data = json.loads(data)
+    max_retries = 5
+    retry_delay = 5
+    attempt = 0
+
+    while attempt < max_retries:
+        curl_command = f"curl -sS {study_url} | jq '.'"
+        data = subprocess.check_output(curl_command, shell=True, text=True)
+
+        json_data = json.loads(data)
+        if isinstance(json_data, dict) and "experiment" in json_data:
+            break
+
+        attempt += 1
+        time.sleep(retry_delay)
 
     experiment_type = json_data.get("experiment", {}).get("type", "N/A")
     organism = json_data.get("experiment", {}).get("species", "N/A")
@@ -46,9 +76,9 @@ def fetch_and_parse_data(study_id):
         for column in contrast_summary:
             contrast_details = column.get("contrastSummary", {})
             if contrast_details:
-                print(f"      - contrast_description: \"{contrast_details.get('contrastDescription', 'N/A')}\"")
+                print(f"      - contrast_description: \"{clean_text(contrast_details.get('contrastDescription', 'N/A'))}\"")
 
-                # Collect and clean data for the contrast properties
+                # collect and clean data for contrast properties
                 cleaned_properties = {
                     "clinical_information": [],
                     "disease": [],
@@ -62,23 +92,26 @@ def fetch_and_parse_data(study_id):
 
                 for prop in contrast_details.get("properties", []):
                     property_name = prop.get("propertyName", "N/A").replace(" ", "_")
-                    test_value = prop.get("testValue", "N/A")
+                    test_value = clean_text(prop.get("testValue", "N/A"))
 
                     if property_name in cleaned_properties and test_value not in cleaned_properties[property_name]:
                         cleaned_properties[property_name].append(test_value)
+
+                # remove duplicate properties
+                cleaned_properties = remove_duplicates(cleaned_properties)
 
                 # print the cleaned properties
                 for prop_name, prop_values in cleaned_properties.items():
                     if prop_values:
                         # remove None, empty strings, whitespace-only values, and accidental commas
                         cleaned_values = [v.strip() for v in prop_values if v and v.strip() and not v.strip().startswith(",")]
+
                         if cleaned_values:
                             print(f"        {prop_name}: {', '.join(cleaned_values)}")
 
-                # Print resources for visualisation if they exist
                 for resource in contrast_details.get("resources", []):
-                    resource_type = resource.get("type", "N/A")
-                    resource_uri = resource.get("uri", "N/A")
+                    resource_type = clean_text(resource.get("type", "N/A"))
+                    resource_uri = clean_text(resource.get("uri", "N/A"))
                     print(f"        resource_type: {resource_type}")
                     print(f"        resource_uri: {resource_uri}")
 
@@ -91,29 +124,33 @@ def fetch_and_parse_data(study_id):
         if assay_group_id != "N/A":
             print(f"      - assay_group_id: {assay_group_id}")
 
-            # Extract properties and print relevant ones
+            # extract properties and print relevant ones
             properties = assay_group.get("assayGroupSummary", {}).get("properties", [])
-            found_factors = False
+            cleaned_properties = {}
 
             for prop in properties:
                 property_name = prop.get("propertyName", "").replace(" ", "_")
-                test_value = prop.get("testValue", "")
+                test_value = clean_text(prop.get("testValue", ""))
 
-                # Check if property is relevant, and print it
-                if property_name in ["organism_part", "developmental_stage", "disease"]:
-                    found_factors = True
-                    print(f"        {property_name}: {test_value}")
+                if property_name and test_value:
+                    if property_name not in cleaned_properties:
+                        cleaned_properties[property_name] = set()
+                    cleaned_properties[property_name].add(test_value)
 
-            # If no relevant factors found, print a message
-            if not found_factors:
-                print("        No relevant factors found.")
+            for property_name, property_values in cleaned_properties.items():
+                if property_values:
+                    print(f"        {property_name}: {', '.join(property_values)}")
+
         else:
             continue
 
 
 # print YAML header with current date
+print("---")
 print(f"date: {formatted_datetime}")
+
 study_ids = get_experiment_ids()
+
 print(f"experiment_count: {len(study_ids)}")
 print("experiments:")
 
