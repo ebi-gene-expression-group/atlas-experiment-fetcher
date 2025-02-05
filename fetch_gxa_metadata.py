@@ -4,9 +4,12 @@ import subprocess
 import json
 import requests
 
+max_retries = 5
+retry_delay = 5
 studyid_counter = 0
 formatted_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-gxa_url = f"https://www.ebi.ac.uk/gxa/json/experiments/"
+gxa_url = "https://www.ebi.ac.uk/gxa/json/experiments/"
+
 
 def clean_text(text):
     if isinstance(text, str):
@@ -28,7 +31,7 @@ def remove_duplicates(properties):
 
 # fetch the list of experiment accessions dynamically from GXA API
 def get_experiment_ids():
-    bash_command = 'curl -sS {gxa_url} | jq -r ".experiments[].experimentAccession" | sort -u'
+    bash_command = f'curl -sS {gxa_url} | jq -r ".experiments[].experimentAccession" | sort -u'
     experiment_accessions = subprocess.check_output(bash_command, shell=True, text=True)
     study_ids = experiment_accessions.strip().split("\n")
 
@@ -38,8 +41,6 @@ def get_experiment_ids():
 def fetch_and_parse_data(study_id):
     study_url = f"{gxa_url}{study_id}"
 
-    max_retries = 5
-    retry_delay = 5
     attempt = 0
 
     while attempt < max_retries:
