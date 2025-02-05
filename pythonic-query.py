@@ -6,7 +6,7 @@ import requests
 
 studyid_counter = 0
 formatted_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
+gxa_url = f"https://www.ebi.ac.uk/gxa/json/experiments/"
 
 def clean_text(text):
     if isinstance(text, str):
