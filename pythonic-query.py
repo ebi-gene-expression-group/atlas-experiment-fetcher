@@ -28,7 +28,7 @@ def remove_duplicates(properties):
 
 # fetch the list of experiment accessions dynamically from GXA API
 def get_experiment_ids():
-    bash_command = 'curl -sS https://www.ebi.ac.uk/gxa/json/experiments | jq -r ".experiments[].experimentAccession" | sort -u'
+    bash_command = 'curl -sS {gxa_url} | jq -r ".experiments[].experimentAccession" | sort -u'
     experiment_accessions = subprocess.check_output(bash_command, shell=True, text=True)
     study_ids = experiment_accessions.strip().split("\n")
 
