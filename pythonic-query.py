@@ -36,7 +36,7 @@ def get_experiment_ids():
 
 
 def fetch_and_parse_data(study_id):
-    study_url = f"https://www.ebi.ac.uk/gxa/json/experiments/{study_id}"
+    study_url = f"{gxa_url}{study_id}"
 
     max_retries = 5
     retry_delay = 5
