@@ -11,16 +11,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: checkout Repository
+      - name: checkout repository
         uses: actions/checkout@v4
 
-      - name: install yamllint and flake8
+      - name: install prettier and flake8
         run: |
+          npm install --save-dev prettier
           pip install yamllint flake8
 
       - name: check YAML syntax
         run: |
-          yamllint .
+          npx prettier --check "**/*.yaml"
 
       - name: lint python code
         run: |
