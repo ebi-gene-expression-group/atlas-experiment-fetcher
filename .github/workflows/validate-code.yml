@@ -21,7 +21,7 @@ jobs:
 
       - name: check YAML syntax
         run: |
-          npx prettier --check --log-level error "**/*.yaml"
+          npx prettier --check --log-level debug "**/*.yaml"
 
       - name: lint python code
         run: |
