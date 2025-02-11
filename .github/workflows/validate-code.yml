@@ -1,0 +1,29 @@
+---
+name: Validate YAML format and python code
+
+on:
+  push: {}
+  pull_request: {}
+
+jobs:
+  validate:
+    name: YAML & python validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
+      - name: install prettier and flake8
+        run: |
+          npm install --save-dev prettier
+          pip install flake8
+
+      - name: check YAML syntax, --check returns 1 for both warnings and errors
+        run: |
+          npx prettier --check "**/*.yaml" 2>&1 | tee prettier.log
+          if grep -q "error" prettier.log; then exit 1; fi
+
+      - name: lint python code
+        run: |
+          flake8 --max-line-length=150 .
