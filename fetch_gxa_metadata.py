@@ -5,21 +5,21 @@ import json
 import requests
 import yaml
 import pandas as pd
-import argparse
 import sys
 
 MAX_RETRIES = 5
 RETRY_DELAY = 5
 GXA_URL = "https://www.ebi.ac.uk/gxa/json/experiments/"
+DEFAULT_OUTPUT_FILENAME = "output"
 
-if len(sys.argv) != 3:
-    print("Usage: python fetch_gxa_metadata.py <output_yaml_filename> <output_tsv_filename>")
+
+if len(sys.argv) > 2:
+    print("Usage: python fetch_gxa_metadata.py [<output_filename>]")
     sys.exit(1)
 
-parser = argparse.ArgumentParser(description="Generate and save experiment data to YAML and tsv")
-parser.add_argument("yaml_filename", help="Output Yaml filename")
-parser.add_argument("tsv_filename", help="Output Tsv filename")
-args = parser.parse_args()
+output_filename = sys.argv[1] if len(sys.argv) == 2 else DEFAULT_OUTPUT_FILENAME
+yaml_filename = f"{output_filename}.yaml"
+tsv_filename = f"{output_filename}.tsv"
 
 
 def clean_text(text):
@@ -176,40 +176,44 @@ def flatten_dict(d, parent_key='', sep='_', keep_keys=None):
     return items
 
 
-formatted_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-study_ids = get_experiment_ids()
-experiments = []
+def main():
+    formatted_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    study_ids = get_experiment_ids()
+    experiments = []
 
-for idx, study_id in enumerate(study_ids, 1):
-    experiments.append(fetch_and_parse_data(study_id, idx))
+    for idx, study_id in enumerate(study_ids, 1):
+        experiments.append(fetch_and_parse_data(study_id, idx))
 
-yaml_data = {
-    "date": formatted_datetime,
-    "experiment_count": len(study_ids),
-    "experiments": experiments
-}
+    yaml_data = {
+        "date": formatted_datetime,
+        "experiment_count": len(study_ids),
+        "experiments": experiments
+    }
 
-with open(args.yaml_filename, "w") as yaml_file:
-    yaml.dump(
-        yaml_data,
-        yaml_file,
-        default_flow_style=False,
-        allow_unicode=True,
-        sort_keys=False,
-        indent=2,
-        explicit_start=True,
-        width=200
-    )
+    with open(yaml_filename, "w") as yaml_file:
+        yaml.dump(
+            yaml_data,
+            yaml_file,
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
+            indent=2,
+            explicit_start=True,
+            width=200
+        )
+
+    # define the keys to keep in TSV file
+    keep_keys = ['organism_part', 'developmental_stage', 'disease', 'age', 'genotype', 'sex']
+
+    flat_data = []
+    for exp in yaml_data.get("experiments", []):
+        flat_exp = flatten_dict(exp, keep_keys=keep_keys)
+        flat_data.append(flat_exp)
+
+    df = pd.DataFrame(flat_data)
+
+    df.to_csv(tsv_filename, sep="\t", index=False)
 
 
-# define the keys to keep in TSV file
-keep_keys = ['organism_part', 'developmental_stage', 'disease', 'age', 'genotype', 'sex']
-
-flat_data = []
-for exp in yaml_data.get("experiments", []):
-    flat_exp = flatten_dict(exp, keep_keys=keep_keys)
-    flat_data.append(flat_exp)
-
-df = pd.DataFrame(flat_data)
-
-df.to_csv(args.tsv_filename, sep="\t", index=False)
+if __name__ == "__main__":
+    main()
