@@ -19,9 +19,10 @@ jobs:
           npm install --save-dev prettier
           pip install flake8
 
-      - name: check YAML syntax
+      - name: check YAML syntax, --check returns 1 for both warnings and errors
         run: |
-          npx prettier --check --log-level debug "**/*.yaml"
+          npx prettier --check "**/*.yaml" 2>&1 | tee prettier.log
+          if grep -q "error" prettier.log; then exit 1; fi
 
       - name: lint python code
         run: |
