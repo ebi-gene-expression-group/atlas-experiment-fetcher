@@ -6,8 +6,16 @@ name: update GXA metadata
 #  workflow_dispatch:
  
 on:
-  push: {}
-  pull_request: {}
+  push:
+    branches:
+      - main
+      - add-action-metadata-update
+  pull_request:
+    branches:
+      - main
+      - add-action-metadata-update
+  workflow_dispatch:
+
 
 jobs:
   update-metadata:
@@ -29,13 +37,16 @@ jobs:
         run: python fetch_gxa_metadata.py gxa-studies
 
       - name: check for changes
-        run: |
-          git diff --exit-code || echo "Changes detected"
         id: check_changes
-        continue-on-error: true
+        run: |
+          if git diff --quiet; then
+            echo "CHANGES=false" >> $GITHUB_ENV
+          else
+            echo "CHANGES=true" >> $GITHUB_ENV
+          fi
 
       - name: commit and push changes
-        if: steps.check_changes.outcome == 'failure'
+        if: env.CHANGES == 'true'
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
