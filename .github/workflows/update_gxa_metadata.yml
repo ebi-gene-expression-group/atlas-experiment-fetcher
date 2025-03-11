@@ -1,9 +1,13 @@
 name: update GXA metadata
 
+#on:
+#  schedule:
+#    - cron: '*/15 * * * *'
+#  workflow_dispatch:
+ 
 on:
-  schedule:
-    - cron: '*/15 * * * *'
-  workflow_dispatch:
+  push: {}
+  pull_request: {}
 
 jobs:
   update-metadata:
