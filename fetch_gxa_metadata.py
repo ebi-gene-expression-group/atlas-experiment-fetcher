@@ -49,6 +49,7 @@ def fetch_and_parse_data(study_id, studyid_counter):
     '''Fetches experiment data from GXA api, parses the JSON response, and extracts relevant details'''
     study_url = f"{GXA_URL}{study_id}"
     attempt = 0
+    json_data = ""
 
     while attempt < MAX_RETRIES:
         try:
@@ -76,6 +77,11 @@ def fetch_and_parse_data(study_id, studyid_counter):
         except requests.RequestException:
             attempt += 1
             time.sleep(RETRY_DELAY)
+
+    if json_data == "":
+        echo f"WARNING: Failed to fetch {study_id}."
+        # Return or do what you think is best when a study ID cannot be fetched
+        return
 
     experiment_type = json_data.get("experiment", {}).get("type", "N/A")
     organism = json_data.get("experiment", {}).get("species", "N/A")
