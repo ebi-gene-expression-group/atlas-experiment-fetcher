@@ -79,7 +79,7 @@ def fetch_and_parse_data(study_id, studyid_counter):
             time.sleep(RETRY_DELAY)
 
     if json_data == "":
-        echo f"WARNING: Failed to fetch {study_id}."
+        print(f"WARNING: Failed to fetch {study_id}.")
         # Return or do what you think is best when a study ID cannot be fetched
         return
 
