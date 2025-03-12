@@ -1,13 +1,10 @@
 name: update GXA metadata
 
-#on:
-#  schedule:
-#    - cron: '*/15 * * * *'
-#  workflow_dispatch:
+# cron every 2 weeks, on Mon night
  
 on:
   schedule:
-    - cron: '0 12-23/3 * * *'
+    - cron: '0 0 * * 1'
   push:
     branches:
       - main
