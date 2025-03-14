@@ -1,4 +1,4 @@
-accession_count	accession	experiment_type	organism	developmental_stage	organism_part	age	genotype	disease	sex
+accession_count	accession	experiment_type	organism	_assay_groups_developmental_stage	_assay_groups_organism_part	_assay_groups_age	_assay_groups_genotype	_assay_groups_disease	_assay_groups_sex
 1	E-ATMX-20	microarray_1colour_mrna_differential	Arabidopsis thaliana	mid rosette growth	leaf				
 2	E-ATMX-25	microarray_1colour_mrna_differential	Arabidopsis thaliana	mid rosette growth stage	rosette				
 3	E-ATMX-26	microarray_1colour_mrna_differential	Arabidopsis thaliana	late rosette growth stage	rosette				
