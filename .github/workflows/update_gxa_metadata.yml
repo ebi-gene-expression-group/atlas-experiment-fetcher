@@ -1,9 +1,4 @@
 name: update GXA metadata
-
-#on:
-#  schedule:
-#    - cron: '*/15 * * * *'
-#  workflow_dispatch:
  
 on:
   schedule:
@@ -50,6 +45,15 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          # get the branch name dynamically
+          BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+
+          # check if we are in detached HEAD state
+          if [ "$BRANCH_NAME" = "HEAD" ]; then
+            BRANCH_NAME=${GITHUB_HEAD_REF}
+            git checkout -b "$BRANCH_NAME"
+          fi
+          
           git add gxa-studies.tsv gxa-studies.yaml
           git commit -m "Update GXA metadata [$(date -u)]"
-          git push
+          git push origin "$BRANCH_NAME"
