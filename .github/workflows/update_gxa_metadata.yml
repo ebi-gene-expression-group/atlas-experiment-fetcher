@@ -1,0 +1,59 @@
+name: update GXA metadata
+ 
+on:
+  schedule:
+    - cron: '0 12-23/3 * * *'
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+
+jobs:
+  update-metadata:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
+      - name: set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: install dependencies
+        run: pip install requests pandas pyyaml
+
+      - name: run metadata update script
+        run: python fetch_gxa_metadata.py gxa-studies
+
+      - name: check for changes
+        id: check_changes
+        run: |
+          if git diff --quiet; then
+            echo "CHANGES=false" >> $GITHUB_ENV
+          else
+            echo "CHANGES=true" >> $GITHUB_ENV
+          fi
+
+      - name: commit and push changes
+        if: env.CHANGES == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          # get the branch name dynamically
+          BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+
+          # check if we are in detached HEAD state
+          if [ "$BRANCH_NAME" = "HEAD" ]; then
+            BRANCH_NAME=${GITHUB_HEAD_REF}
+            git checkout -b "$BRANCH_NAME"
+          fi
+          
+          git add gxa-studies.tsv gxa-studies.yaml
+          git commit -m "Update GXA metadata [$(date -u)]"
+          git push origin "$BRANCH_NAME"

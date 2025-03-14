@@ -7,7 +7,7 @@ import yaml
 import pandas as pd
 import sys
 
-MAX_RETRIES = 5
+MAX_RETRIES = 15
 RETRY_DELAY = 5
 GXA_URL = "https://www.ebi.ac.uk/gxa/json/experiments/"
 DEFAULT_OUTPUT_FILENAME = "output"
