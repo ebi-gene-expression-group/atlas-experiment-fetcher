@@ -77,7 +77,6 @@ def fetch_and_parse_data(study_id, studyid_counter):
             attempt += 1
             time.sleep(RETRY_DELAY)
 
-
     experiment_type = json_data.get("experiment", {}).get("type", "N/A")
     organism = json_data.get("experiment", {}).get("species", "N/A")
 
